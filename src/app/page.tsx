@@ -1,103 +1,113 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useMutation } from '@tanstack/react-query';
+import api from './lib/api';
+import { Loader2 } from 'lucide-react';
+
+export default function AirtimeForm() {
+  const [phone, setPhone] = useState('');
+  const [network, setNetwork] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      api
+        .post('/api/airtime', {
+          phone,
+          network,
+          amount: Number(amount),
+        })
+        .then(res => res.data),
+    onSuccess: data => {
+      data.success
+        ? toast.success('Airtime sent successfully!')
+        : toast.error(`API Error: ${data.error || 'Unknown error'}`);
+    },
+    onError: () => {
+      toast.error('Error while submitting the form.');
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!/^\d{11}$/.test(phone)) {
+      toast.error('Invalid phone number (must be 11 digits)');
+      return;
+    }
+    if (!network || !amount) {
+      toast.error('All fields are required.');
+      return;
+    }
+    mutation.mutate();
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 via-pink-500 to-pink-400">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Airtime Form</h2>
+        <div className="w-16 h-1 bg-pink-500 mb-6 rounded-full"></div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Phone Number"
+              className="w-full px-4 py-2 border-b-2 border-pink-400 focus:outline-none"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          <div className="mb-4">
+            <select
+              value={network}
+              onChange={e => setNetwork(e.target.value)}
+              className="w-full px-4 py-2 border-b-2 border-pink-400 focus:outline-none"
+            >
+              <option value="">Select Network</option>
+              <option value="MTN">MTN</option>
+              <option value="AIRTEL">Airtel</option>
+              <option value="GLO">Glo</option>
+              <option value="9MOBILE">9mobile</option>
+            </select>
+          </div>
+          <div className="mb-6">
+            <input
+              type="number"
+              placeholder="Amount"
+              className="w-full px-4 py-2 border-b-2 border-pink-400 focus:outline-none"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+            />
+          </div>
+          {mutation.status === 'pending' && (
+            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
+              <Loader2 className="animate-spin w-12 h-12 text-pink-500" />
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={mutation.status === 'pending'}
+            className="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-md disabled:opacity-50"
           >
-            Read our docs
-          </a>
+            {mutation.status === 'pending' ? 'Sending…' : 'Continue'}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-gray-500 my-4">
+          or Connect With Social Media
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <button className="flex items-center justify-center gap-2 w-full py-2 bg-blue-400 hover:bg-blue-500 text-white font-medium rounded-md">
+            Sign in With Twitter
+          </button>
+          <button className="flex items-center justify-center gap-2 w-full py-2 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-md">
+            Sign in With Facebook
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
