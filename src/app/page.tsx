@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function AirtimeForm() {
   const [phone, setPhone] = useState('');
-  const [network, setNetwork] = useState('');
+  const [firstLevel, setfirstLevel] = useState('');
   const [amount, setAmount] = useState('');
 
   const mutation = useMutation({
@@ -16,7 +16,7 @@ export default function AirtimeForm() {
       api
         .post('/api/airtime', {
           phone,
-          network,
+          firstLevel,
           amount: Number(amount),
         })
         .then(res => res.data),
@@ -32,14 +32,16 @@ export default function AirtimeForm() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!/^\d{11}$/.test(phone)) {
       toast.error('Invalid phone number (must be 11 digits)');
       return;
     }
-    if (!network || !amount) {
-      toast.error('All fields are required.');
+    if (!firstLevel || !amount) {
+      toast.error('All fields (phone, network, amount) are required.');
       return;
     }
+
     mutation.mutate();
   };
 
@@ -50,6 +52,7 @@ export default function AirtimeForm() {
         <div className="w-16 h-1 bg-pink-500 mb-6 rounded-full"></div>
 
         <form onSubmit={handleSubmit}>
+          {/* Phone Input */}
           <div className="mb-4">
             <input
               type="text"
@@ -59,10 +62,11 @@ export default function AirtimeForm() {
               onChange={e => setPhone(e.target.value)}
             />
           </div>
+
           <div className="mb-4">
             <select
-              value={network}
-              onChange={e => setNetwork(e.target.value)}
+              value={firstLevel}
+              onChange={e => setfirstLevel(e.target.value)}
               className="w-full px-4 py-2 border-b-2 border-pink-400 focus:outline-none"
             >
               <option value="">Select Network</option>
@@ -72,6 +76,7 @@ export default function AirtimeForm() {
               <option value="9MOBILE">9mobile</option>
             </select>
           </div>
+
           <div className="mb-6">
             <input
               type="number"
@@ -81,11 +86,13 @@ export default function AirtimeForm() {
               onChange={e => setAmount(e.target.value)}
             />
           </div>
+
           {mutation.status === 'pending' && (
             <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
               <Loader2 className="animate-spin w-12 h-12 text-pink-500" />
             </div>
           )}
+
           <button
             type="submit"
             disabled={mutation.status === 'pending'}
