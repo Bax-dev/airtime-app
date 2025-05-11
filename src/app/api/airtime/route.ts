@@ -44,20 +44,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const amountString = amountNumber.toString();
-
     await connectDB();
 
-    console.log('Calling Airtime API with payload:', { phone, firstLevel, amount: amountString });
+    console.log('Calling Airtime API with payload:', { phone, firstLevel, amount: amountNumber });
     
-    const apiRes = await sendAirtimeRequest({ phone, firstLevel, amount: amountString });
+    const apiRes = await sendAirtimeRequest({ phone, firstLevel, amount: amountNumber });
 
     console.log('Airtime API Response:', apiRes);
 
     await Airtime.create({
       phone,
       firstLevel,
-      amount: Number(amount),
+      amount: amountNumber,
       status: apiRes.success ? 'success' : 'failed',
       response: apiRes,
     });
